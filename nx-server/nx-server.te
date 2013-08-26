@@ -1,0 +1,31 @@
+policy_module(nx-server, 1.0.1)
+
+########################################
+#
+# Declarations
+#
+
+type nx-server_t;
+type nx-server_config_t;
+type nx-server_exec_t;
+type nx-server_lib_t;
+type nx-server_log_t;
+type nx-server_run_t;
+type nx-server_tmp_t;
+type nx-server_db_t;
+init_daemon_domain(nx-server_t, nx-server_exec_t)
+
+permissive nx-server_t;
+
+########################################
+#
+# nx-server local policy
+#
+allow nx-server_t self:fifo_file rw_fifo_file_perms;
+allow nx-server_t self:unix_stream_socket create_stream_socket_perms;
+
+domain_use_interactive_fds(nx-server_t)
+
+files_read_etc_files(nx-server_t)
+
+miscfiles_read_localization(nx-server_t)

@@ -1,0 +1,21 @@
+
+## <summary>policy for nx-server</summary>
+
+########################################
+## <summary>
+##	Execute TEMPLATE in the nx-server domin.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`nx-server_domtrans',`
+	gen_require(`
+		type nx-server_t, nx-server_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, nx-server_exec_t, nx-server_t)
+')
