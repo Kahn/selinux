@@ -1,0 +1,63 @@
+policy_module(ircdhyb,0.0.23)
+
+require {
+        type usr_t;
+        type ircd_port_t;
+        type node_t;
+        type port_t;
+        class tcp_socket { name_bind name_connect setopt bind accept connect listen node_bind };
+        class udp_socket setopt;
+        class dir { write remove_name add_name };
+        class file { execute read create write getattr unlink open append };
+        class netlink_route_socket { create bind getattr nlmsg_read };
+}
+
+# This doesn't setup the ports. Use semanage to create IRC ports. See http://danwalsh.livejournal.com/10607.html
+#type ircd_port_t;
+
+type ircdhyb_t;
+type ircdhyb_exec_t;
+init_daemon_domain(ircdhyb_t,ircdhyb_exec_t)
+
+domain_type(ircdhyb_t)
+domain_entry_file(ircdhyb_t, ircdhyb_exec_t)
+
+type ircdhyb_log_t;
+logging_log_file(ircdhyb_log_t)
+
+type ircdhyb_tmp_t;
+files_tmp_file(ircdhyb_tmp_t)
+
+type ircdhyb_conf_t;
+files_config_file(ircdhyb_conf_t)
+
+type ircdhyb_lib_t;
+files_type(ircdhyb_lib_t)
+
+type ircdhyb_var_run_t;
+files_pid_file(ircdhyb_var_run_t)
+
+# IRCD-Hybrid Policy
+
+allow ircdhyb_t ircdhyb_conf_t:file { read write};
+allow ircdhyb_t ircdhyb_conf_t:dir search;
+allow ircdhyb_t ircdhyb_lib_t:file { read getattr open execute };
+allow ircdhyb_t ircdhyb_log_t:dir { add_name write };
+allow ircdhyb_t ircdhyb_log_t:file append;
+allow ircdhyb_t ircdhyb_var_run_t:dir { write search add_name remove_name };
+allow ircdhyb_t ircdhyb_var_run_t:file { write read create open getattr unlink };
+
+allow ircdhyb_t self:process signull;
+
+allow ircdhyb_t self:netlink_route_socket create;
+allow ircdhyb_t self:tcp_socket { getattr bind listen connect accept setopt create read write };
+allow ircdhyb_t self:udp_socket { setopt create write read };
+allow ircdhyb_t ircd_port_t:tcp_socket { name_bind name_connect };
+allow ircdhyb_t node_t:tcp_socket node_bind;
+allow ircdhyb_t port_t:tcp_socket name_bind;
+allow ircdhyb_t self:netlink_route_socket { bind getattr nlmsg_read write read };
+
+dev_read_rand(ircdhyb_t)
+dev_read_urand(ircdhyb_t)
+miscfiles_read_localization(ircdhyb_t)
+sysnet_read_config(ircdhyb_t)
