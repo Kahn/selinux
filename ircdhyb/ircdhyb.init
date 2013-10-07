@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# ircdhyb        Startup script for the IRCD Hybrid Server
+#
+# chkconfig: - 85 15
+# processname: ircdhyb
+# config: /usr/local/ircd/etc/charles.conf
+# config: /etc/sysconfig/ircdhyb
+# pidfile: /usr/local/ircd/var/run/ircdhyb.pid
+#
+### BEGIN INIT INFO
+# Provides: ircdhyb
+# Required-Start: $local_fs $remote_fs $network $named
+# Required-Stop: $local_fs $remote_fs $network
+# Short-Description: start and stop IRCD Hybrid Server
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+INITLOG_ARGS=""
+
+ircdhyb=${ircdhyb-/usr/local/ircd/sbin/ircd}
+prog=ircdhyb
+pidfile=${PIDFILE-/usr/local/ircd/var/run/ircdhyb.pid}
+configfile=${PIDFILE-/usr/local/ircd/etc/ircdhyb.conf}
+logfile=${PIDFILE-/usr/local/ircd/var/log/ircdhyb.log}
+args="-pidfile ${pidfile} -configfile ${configfile} -logfile ${logfile}"
+RETVAL=0
+STOP_TIMEOUT=${STOP_TIMEOUT-10}
+
+start() {
+        echo -n $"Starting $prog: "
+        LANG=`daemon +10 --user=ircd $ircdhyb $args`
+        RETVAL=$?
+        return $RETVAL
+}
+
+# When stopping ircdhyb, a delay (of default 10 second) is required
+# before SIGKILLing the ircdhyb parent; this gives enough time for the
+# ircdhyb parent to SIGKILL any errant children.
+stop() {
+        echo -n $"Stopping $prog: "
+        killproc -p ${pidfile} -d ${STOP_TIMEOUT} $ircdhyb
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] && rm -f ${pidfile}
+}
+reload() {
+    echo -n $"Reloading $prog: "
+        # Force LSB behaviour from killproc
+        LSB=1 killproc -p ${pidfile} $ircdhyb -HUP
+        RETVAL=$?
+        if [ $RETVAL -eq 7 ]; then
+            failure $"ircdhyb shutdown"
+        fi
+    echo
+}
+
+# See how we were called.
+case "$1" in
+  start)
+        start
+        sleep 1
+        status -p ${pidfile} $ircdhyb
+        ;;
+  stop)
+        stop
+        sleep 1
+        status -p ${pidfile} $ircdhyb
+        ;;
+  status)
+        status -p ${pidfile} $ircdhyb
+        RETVAL=$?
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  reload)
+        reload
+        ;;
+  *)
+        echo $"Usage: $prog {start|stop|restart|reload|status}"
+        RETVAL=2
+esac
+
+exit $RETVAL
